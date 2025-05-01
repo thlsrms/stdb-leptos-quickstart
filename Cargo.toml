@@ -15,7 +15,7 @@ leptos_axum = { version = "0.7", optional = true }
 leptos_meta = { version = "0.7" }
 tokio = { version = "1", features = ["rt-multi-thread"], optional = true }
 wasm-bindgen = { version = "=0.2.100", optional = true }
-spacetimedb-sdk = { git = "https://github.com/thlsrms/SpacetimeDB", rev = "d39803954d871a2dd4d48da1515b", optional = true}
+spacetimedb-sdk = { git = "https://github.com/thlsrms/SpacetimeDB", branch = "rust-web-sdk", optional = true}
 chrono = { version = "0.4", optional = true }
 
 [features]
