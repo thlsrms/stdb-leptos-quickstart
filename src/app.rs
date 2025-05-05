@@ -17,6 +17,8 @@ use leptos_router::{
     StaticSegment,
 };
 #[cfg(feature = "hydrate")]
+use spacetimedb_sdk::credentials::cookies::Cookie;
+#[cfg(feature = "hydrate")]
 use spacetimedb_sdk::{DbConnectionBuilder, DbContext, Identity, Table};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
@@ -62,10 +64,16 @@ const HOST: &str = "http://localhost:3000";
 
 #[cfg(feature = "hydrate")]
 fn stdb_connection_builder() -> DbConnectionBuilder<RemoteModule> {
-    DbConnection::builder()
+    let builder = DbConnection::builder()
         .with_module_name(MODULE_NAME)
         .with_uri(HOST)
-        .with_light_mode(true)
+        .with_light_mode(true);
+
+    if let Ok(token) = Cookie::get("quickstart-chat_token") {
+        builder.with_token(token)
+    } else {
+        builder
+    }
 }
 
 #[cfg(feature = "hydrate")]
@@ -118,6 +126,7 @@ fn HomePage() -> impl IntoView {
                 let conn_builder = stdb_connection_builder()
                     .on_connect(move |ctx, id, token| {
                         register_callbacks(ctx, set_messages.clone());
+                        let _ = Cookie::new("quickstart-chat_token", token).set();
                         set_identity.set(Some((id, token.into())));
                         let _ = ctx.reducers.set_name(name.get_untracked().unwrap().clone());
                     })
