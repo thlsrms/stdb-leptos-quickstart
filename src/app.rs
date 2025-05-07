@@ -109,7 +109,7 @@ fn register_callbacks(ctx: &DbConnection, messages_writer: WriteSignal<Vec<(Mess
 #[component]
 fn HomePage() -> impl IntoView {
     #[cfg(feature = "hydrate")]
-    let (identity, set_identity) = signal::<Option<(Identity, String)>>(None);
+    let (identity, set_identity) = signal::<Option<Identity>>(None);
     #[cfg(feature = "hydrate")]
     let connected = move || identity.get().is_some();
     #[cfg(not(feature = "hydrate"))]
@@ -126,8 +126,10 @@ fn HomePage() -> impl IntoView {
                 let conn_builder = stdb_connection_builder()
                     .on_connect(move |ctx, id, token| {
                         register_callbacks(ctx, set_messages.clone());
-                        let _ = Cookie::new("quickstart-chat_token", token).set();
-                        set_identity.set(Some((id, token.into())));
+                        if let Ok(None) = Cookie::get("quickstart-chat_token") {
+                            let _ = Cookie::new("quickstart-chat_token", token).set();
+                        }
+                        set_identity.set(Some(id));
                         let _ = ctx.reducers.set_name(name.get_untracked().unwrap().clone());
                     })
                     .on_disconnect(move |_, error| {
@@ -140,7 +142,7 @@ fn HomePage() -> impl IntoView {
 
                 match conn_builder.build().await {
                     Ok(conn) => {
-                        conn.run_threaded();
+                        conn.run_background();
                         return Some(Rc::new(conn));
                     }
                     Err(e) => {
@@ -156,7 +158,7 @@ fn HomePage() -> impl IntoView {
     Effect::new(move |_| {
         if connected() {
             let name = name.get().unwrap();
-            leptos::logging::log!("{name} connected with id {}", identity.get().unwrap().0);
+            leptos::logging::log!("{name} connected with id {}", identity.get().unwrap());
         }
     });
 
